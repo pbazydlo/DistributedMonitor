@@ -17,6 +17,7 @@ PvmCommunicationBase::PvmCommunicationBase()
 
 PvmCommunicationBase::~PvmCommunicationBase()
 {
+ delete[] this->_tids;
  pvm_exit();
 }
 
@@ -40,6 +41,12 @@ int PvmCommunicationBase::GetNumberOfSlaves()
 void PvmCommunicationBase::SetDesiredNumberOfSlaves(int numberOfSlaves)
 {
  this->_desiredNumberOfSlaves=numberOfSlaves;
+ if(this->_tids!=NULL)
+ {
+  delete[] this->_tids;
+ }
+
+ this->_tids = new int[this->desiredNumberOfSlaves];
 }
 
 void PvmCommunicationBase::Send(int receiver, int messageType)

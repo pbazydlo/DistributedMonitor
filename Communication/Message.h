@@ -4,6 +4,6 @@
 struct Message {
 	int Sender;
 	int MessageType;
-}
+};
 
 #endif
