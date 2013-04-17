@@ -2,6 +2,7 @@
 #define _ICommunicationBase_
 
 #include "Message.h"
+#include <stddef.h>
 
 #define MASTER	0
 #define SLAVE 	1
@@ -10,10 +11,11 @@
 
 class ICommunicationBase {
 public:
-	virtual void Init(int masterOrSlave);
-	virtual void Send(int receiver, int messageType);
-	virtual Message* Receive();
-	virtual void Broadcast(int messageType);
+	ICommunicationBase();
+	virtual void Init(int masterOrSlave) = 0;
+	virtual void Send(int receiver, int messageType) = 0;
+	virtual Message* Receive() = 0;
+	virtual void Broadcast(int messageType) = 0;
 };
 
 #endif

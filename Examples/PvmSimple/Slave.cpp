@@ -6,7 +6,7 @@ int main()
  pvmCom->SetDesiredNumberOfSlaves(SLAVENUM);
  pvmCom->Init(SLAVE);
  Message* msg = pvmCom->Receive();
- pvmCom.Send(msg->Sender, 5);
+ pvmCom->Send(msg->Sender, 5);
  delete msg;
  delete pvmCom;
 }

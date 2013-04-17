@@ -46,7 +46,7 @@ void PvmCommunicationBase::SetDesiredNumberOfSlaves(int numberOfSlaves)
   delete[] this->_tids;
  }
 
- this->_tids = new int[this->desiredNumberOfSlaves];
+ this->_tids = new int[this->_desiredNumberOfSlaves];
 }
 
 void PvmCommunicationBase::Send(int receiver, int messageType)
@@ -71,7 +71,7 @@ void PvmCommunicationBase::Broadcast(int messageType)
 
 Message* PvmCommunicationBase::Receive()
 {
- int bufid, sender, messageSize, messageType, messsageTid;
+ int bufid, sender, messageSize, messageType, messageTid;
  bufid = pvm_recv(-1, -1);
  pvm_upkint(&sender, 1, 1);
  pvm_bufinfo(bufid, &messageSize, &messageType, &messageTid);

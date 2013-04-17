@@ -24,7 +24,7 @@ public:
 	void Init(int masterOrSlave);
 	void Send(int receiver, int messageType);
 	Message* Receive();
-	void Broadast(int messageType);
+	void Broadcast(int messageType);
 	int GetNumberOfSlaves();
 	void SetDesiredNumberOfSlaves(int numberOfSlaves);
 };
