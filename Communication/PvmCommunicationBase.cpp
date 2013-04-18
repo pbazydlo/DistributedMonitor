@@ -5,6 +5,15 @@
 // Create singleton
 PvmCommunicationBase* PvmCommunicationBase::_instance = new PvmCommunicationBase();
 
+void PvmCommunicationBase::HandleMessage(int messageId)
+{
+ int messageSize, messageTid;
+ Message* msg = new Message();
+ pvm_upkint(&msg->Sender, 1, 1);
+ pvm_bufinfo(messageId, &messageSize, &msg->MessageType, &messageTid);
+ this->_function(msg);
+}
+
 // Returns singleton instance
 PvmCommunicationBase* PvmCommunicationBase::GetInstance()
 {
@@ -24,11 +33,19 @@ PvmCommunicationBase::~PvmCommunicationBase()
 
 void PvmCommunicationBase::Init(int masterOrSlave)
 {
+ if(this->_tids!=NULL)
+ {
+  return;
+ }
+ pvm_addmhf(-1,-1,-1, this->HandleMessage);
+
  if(masterOrSlave==MASTER)
  {
+  this->_tids = new int[this->_desiredNumberOfSlaves];
   this->_nproc = pvm_spawn(SLAVENAME, NULL, PvmTaskDefault, "", 
   	this->_desiredNumberOfSlaves, this->_tids);
  }
+
  pvm_joingroup(GROUPNAME);
  pvm_barrier(GROUPNAME, this->_desiredNumberOfSlaves+1);
 }
@@ -41,12 +58,6 @@ int PvmCommunicationBase::GetNumberOfSlaves()
 void PvmCommunicationBase::SetDesiredNumberOfSlaves(int numberOfSlaves)
 {
  this->_desiredNumberOfSlaves=numberOfSlaves;
- if(this->_tids!=NULL)
- {
-  delete[] this->_tids;
- }
-
- this->_tids = new int[this->_desiredNumberOfSlaves];
 }
 
 void PvmCommunicationBase::Send(int receiver, int messageType)
@@ -81,7 +92,10 @@ Message* PvmCommunicationBase::Receive()
  return result;
 }
 
-
+int PvmCommunicationBase::GetTid()
+{
+ return this->_myTid;
+}
 
 
 

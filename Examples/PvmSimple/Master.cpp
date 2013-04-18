@@ -2,17 +2,19 @@
 
 using namespace std;
 
+void Handle(Message* msg)
+{
+  cout<<"SENDER: "<<msg->Sender<<" TAG "<<msg->MessageType<<endl;
+  delete msg;
+}
+
 int main()
 {
  PvmCommunicationBase* pvmCom = PvmCommunicationBase::GetInstance();
  pvmCom->SetDesiredNumberOfSlaves(SLAVENUM);
+ pvmCom->SetMessageHandlingFunction(Handle);
  pvmCom->Init(MASTER);
  pvmCom->Broadcast(5);
- for(int i=0;i<pvmCom->GetNumberOfSlaves();i++)
- {
-  Message* msg = pvmCom->Receive();
-  cout<<"SENDER: "<<msg->Sender<<" TAG "<<msg->MessageType<<endl;
-  delete msg;
- }
+ sleep(5);
  delete pvmCom;
 }

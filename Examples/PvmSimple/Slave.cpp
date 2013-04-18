@@ -1,12 +1,19 @@
 #include "Common.h"
 
+PvmCommunicationBase* pvmCom;
+
+void Handle(Message* msg)
+{
+  pvmCom->Send(msg->Sender, 5);
+  delete msg;
+}
+
 int main()
 {
- PvmCommunicationBase* pvmCom = PvmCommunicationBase::GetInstance();
+ pvmCom = PvmCommunicationBase::GetInstance();
  pvmCom->SetDesiredNumberOfSlaves(SLAVENUM);
+ pvmCom->SetMessageHandlingFunction(Handle);
  pvmCom->Init(SLAVE);
- Message* msg = pvmCom->Receive();
- pvmCom->Send(msg->Sender, 5);
- delete msg;
+ sleep(5);
  delete pvmCom;
 }

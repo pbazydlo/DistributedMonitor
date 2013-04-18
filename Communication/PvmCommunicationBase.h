@@ -16,6 +16,8 @@ private:
 	int _nproc;
 	int* _tids;
 	int _desiredNumberOfSlaves;
+	void HandleMessage(int);
+	void (*_function)(Message*);
 
 public:
 	static PvmCommunicationBase* GetInstance();
@@ -27,6 +29,8 @@ public:
 	void Broadcast(int messageType);
 	int GetNumberOfSlaves();
 	void SetDesiredNumberOfSlaves(int numberOfSlaves);
+	int GetTid();
+	void SetMessageHandlingFunction(void (*function)(Message*));
 };
 
 #endif
