@@ -3,7 +3,7 @@
 
 #include "ICommunicationBase.h"
 
-#define SLAVENAME "Slave"
+#define SLAVENAME "slave"
 #define GROUPNAME "PVM_DIST_MON"
 
 class PvmCommunicationBase : public ICommunicationBase {

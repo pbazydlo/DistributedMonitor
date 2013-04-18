@@ -1,6 +1,7 @@
 #include <pvm3.h>
 #include "PvmCommunicationBase.h"
 
+
 // Create singleton
 PvmCommunicationBase* PvmCommunicationBase::_instance = new PvmCommunicationBase();
 
@@ -28,7 +29,6 @@ void PvmCommunicationBase::Init(int masterOrSlave)
   this->_nproc = pvm_spawn(SLAVENAME, NULL, PvmTaskDefault, "", 
   	this->_desiredNumberOfSlaves, this->_tids);
  }
-
  pvm_joingroup(GROUPNAME);
  pvm_barrier(GROUPNAME, this->_desiredNumberOfSlaves+1);
 }

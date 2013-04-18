@@ -11,7 +11,7 @@ int main()
  for(int i=0;i<pvmCom->GetNumberOfSlaves();i++)
  {
   Message* msg = pvmCom->Receive();
-  cout<<msg->Sender<<endl;
+  cout<<"SENDER: "<<msg->Sender<<" TAG "<<msg->MessageType<<endl;
   delete msg;
  }
  delete pvmCom;
