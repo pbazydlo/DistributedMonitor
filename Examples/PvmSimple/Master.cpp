@@ -17,6 +17,7 @@ int main()
  cout<<"init\n";
  pvmCom->Init(MASTER);
  pvmCom->Broadcast(5);
- sleep(5);
+ sleep(3);
+// while(1);
  delete pvmCom;
 }

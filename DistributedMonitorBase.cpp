@@ -1,4 +1,5 @@
 #include "DistributedMonitorBase.h"
+#include "Logging/Logger.h"
 namespace DistributedMonitor{
 
 #define DMB_MSG_ENTRY_REQUEST	100
@@ -6,9 +7,12 @@ namespace DistributedMonitor{
 
 DistributedMonitorBase::DistributedMonitorBase(ICommunicationBase* communicationBase)
 {
+ Logger* log = new Logger();
+ log->Log("Initialising DistributedMonitorBase\n", LOG_DEBUG);
  this->_communicationBase = communicationBase;
  // this->_monitorId = NextMonitorId;
  // NextMonitorId++;
+ delete log;
 }
 
 void DistributedMonitorBase::Lock()

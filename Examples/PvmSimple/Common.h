@@ -2,4 +2,4 @@
 #include <iostream>
 #include <unistd.h>
 
-#define SLAVENUM 10
+#define SLAVENUM 1

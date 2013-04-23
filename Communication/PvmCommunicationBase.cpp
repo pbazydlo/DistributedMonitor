@@ -1,5 +1,8 @@
 #include <pvm3.h>
 #include "PvmCommunicationBase.h"
+#include "../Logging/Logger.h"
+#include <stdio.h>
+#include <unistd.h>
 #define SENDTAG 1
 
 // Create singleton
@@ -10,10 +13,13 @@ int PvmCommunicationBase::_handleMessageMHID = 0;
 
 int PvmCommunicationBase::HandleMessage(int messageId)
 {
+ Logger* log = new Logger();
+ log->Log("Got message", LOG_DEBUG);
  int messageSize, messageTid;
  Message* msg = new Message();
  pvm_upkint(&msg->Sender, 1, 1);
  pvm_upkint(&msg->MessageType, 1, 1);
+ delete log;
 // pvm_bufinfo(messageId, &messageSize, &msg->MessageType, &messageTid);
  (*PvmCommunicationBase::_function)(msg);
  return 0;
@@ -27,11 +33,18 @@ PvmCommunicationBase* PvmCommunicationBase::GetInstance()
 
 PvmCommunicationBase::PvmCommunicationBase()
 {
+ Logger* log =new Logger();
  this->_myTid = pvm_mytid();
+ log->Log("Initialised communication base", LOG_DEBUG);
+ delete log;
 }
 
 PvmCommunicationBase::~PvmCommunicationBase()
 {
+ Logger* log =new Logger();
+ log->Log("Cleaning up after communication base", LOG_DEBUG);
+ delete log;
+
  delete[] this->_tids;
  pvm_delmhf(PvmCommunicationBase::_handleMessageMHID);
  pvm_exit();
@@ -43,17 +56,49 @@ void PvmCommunicationBase::Init(int masterOrSlave)
  {
   return;
  }
- 
- PvmCommunicationBase::_handleMessageMHID = pvm_addmhf(-1,1,-1, HandleMessage);
+
+ Logger* log = new Logger();
+ log->Log("Init", LOG_DEBUG);
+
+
  if(masterOrSlave==MASTER)
  {
+  log->Log("Init{MASTER}", LOG_DEBUG);
   this->_tids = new int[this->_desiredNumberOfSlaves];
   this->_nproc = pvm_spawn(SLAVENAME, NULL, PvmTaskDefault, "", 
   	this->_desiredNumberOfSlaves, this->_tids);
  }
 
+ log->Log("Init-Joingroup", LOG_DEBUG);
  pvm_joingroup(GROUPNAME);
+ log->Log("Init-Approaching barrier", LOG_DEBUG);
  pvm_barrier(GROUPNAME, this->_desiredNumberOfSlaves+1);
+
+ if(masterOrSlave==MASTER)
+ {
+  int  ctx = pvm_newcontext();
+  this->Broadcast(ctx);
+  pvm_setcontext(ctx);
+ }
+ else
+ {
+  log->Log("Slave receive ctx", LOG_DEBUG);
+  Message* msg = this->Receive();
+  log->Log("Slave got ctx", LOG_DEBUG);
+  pvm_setcontext(msg->MessageType);
+  delete msg;
+ }
+	int ctx = pvm_getcontext();
+//	 PvmCommunicationBase::_handleMessageMHID = pvm_addmhf(-1,SENDTAG,-1, HandleMessage);
+//	 pvm_delmhf(PvmCommunicationBase::_handleMessageMHID);
+	 PvmCommunicationBase::_handleMessageMHID = pvm_addmhf(-1,SENDTAG,ctx, HandleMessage);
+
+	 log->Log("HANDLE MESSAGE MHID", LOG_DEBUG);
+	 char mhid[200];
+	 sprintf(mhid, "M: %d|C: %d", PvmCommunicationBase::_handleMessageMHID, ctx);
+	 log->Log(mhid, LOG_DEBUG);
+ log->Log("End init", LOG_DEBUG);
+ delete log;
 }
 
 int PvmCommunicationBase::GetNumberOfSlaves()
@@ -82,6 +127,9 @@ void PvmCommunicationBase::Send(int receiver, int messageType)
 
 void PvmCommunicationBase::Broadcast(int messageType)
 {
+ Logger* log = new Logger();
+ log->Log("Broadcast", LOG_DEBUG);
+ delete log;
  pvm_initsend(PvmDataDefault);
  pvm_pkint(&this->_myTid, 1, 1);
  pvm_pkint(&messageType, 1, 1);
@@ -93,7 +141,8 @@ Message* PvmCommunicationBase::Receive()
  int bufid, sender, messageSize, messageType, messageTid;
  bufid = pvm_recv(-1, -1);
  pvm_upkint(&sender, 1, 1);
- pvm_bufinfo(bufid, &messageSize, &messageType, &messageTid);
+ pvm_upkint(&messageType, 1, 1);
+// pvm_bufinfo(bufid, &messageSize, &messageType, &messageTid);
  Message* result = new Message();
  result->Sender = sender;
  result->MessageType = messageType;

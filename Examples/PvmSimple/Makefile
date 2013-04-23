@@ -1,7 +1,7 @@
 CXX=g++
 PVMINC=$(PVM_ROOT)/include
 PVMLIB=$(PVM_ROOT)/lib/$(PVM_ARCH) 
-OBJS=../../DistributedMonitorBase.o ../../Communication/PvmCommunicationBase.o ../../Communication/ICommunicationBase.o
+OBJS=../../DistributedMonitorBase.o ../../Communication/PvmCommunicationBase.o ../../Communication/ICommunicationBase.o ../../Logging/Logger.o
 
 all:	$(PVM_HOME)/master $(PVM_HOME)/slave
 
