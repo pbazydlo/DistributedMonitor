@@ -10,9 +10,11 @@ void Handle(Message* msg)
 
 int main()
 {
+ cout<<"start\n";
  PvmCommunicationBase* pvmCom = PvmCommunicationBase::GetInstance();
  pvmCom->SetDesiredNumberOfSlaves(SLAVENUM);
  pvmCom->SetMessageHandlingFunction(Handle);
+ cout<<"init\n";
  pvmCom->Init(MASTER);
  pvmCom->Broadcast(5);
  sleep(5);

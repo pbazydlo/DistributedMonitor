@@ -1,17 +1,22 @@
 #include <pvm3.h>
 #include "PvmCommunicationBase.h"
-
+#define SENDTAG 1
 
 // Create singleton
 PvmCommunicationBase* PvmCommunicationBase::_instance = new PvmCommunicationBase();
 
-void PvmCommunicationBase::HandleMessage(int messageId)
+void (*PvmCommunicationBase:: _function)(Message*) = 0;
+int PvmCommunicationBase::_handleMessageMHID = 0;
+
+int PvmCommunicationBase::HandleMessage(int messageId)
 {
  int messageSize, messageTid;
  Message* msg = new Message();
  pvm_upkint(&msg->Sender, 1, 1);
- pvm_bufinfo(messageId, &messageSize, &msg->MessageType, &messageTid);
- this->_function(msg);
+ pvm_upkint(&msg->MessageType, 1, 1);
+// pvm_bufinfo(messageId, &messageSize, &msg->MessageType, &messageTid);
+ (*PvmCommunicationBase::_function)(msg);
+ return 0;
 }
 
 // Returns singleton instance
@@ -28,6 +33,7 @@ PvmCommunicationBase::PvmCommunicationBase()
 PvmCommunicationBase::~PvmCommunicationBase()
 {
  delete[] this->_tids;
+ pvm_delmhf(PvmCommunicationBase::_handleMessageMHID);
  pvm_exit();
 }
 
@@ -37,8 +43,8 @@ void PvmCommunicationBase::Init(int masterOrSlave)
  {
   return;
  }
- pvm_addmhf(-1,-1,-1, this->HandleMessage);
-
+ 
+ PvmCommunicationBase::_handleMessageMHID = pvm_addmhf(-1,1,-1, HandleMessage);
  if(masterOrSlave==MASTER)
  {
   this->_tids = new int[this->_desiredNumberOfSlaves];
@@ -70,14 +76,16 @@ void PvmCommunicationBase::Send(int receiver, int messageType)
 
  pvm_initsend(PvmDataDefault);
  pvm_pkint(&this->_myTid, 1, 1);
- pvm_send(receiver, messageType);
+ pvm_pkint(&messageType, 1, 1);
+ pvm_send(receiver, SENDTAG);
 }
 
 void PvmCommunicationBase::Broadcast(int messageType)
 {
  pvm_initsend(PvmDataDefault);
  pvm_pkint(&this->_myTid, 1, 1);
- pvm_bcast(GROUPNAME, messageType);
+ pvm_pkint(&messageType, 1, 1);
+ pvm_bcast(GROUPNAME, SENDTAG);
 }
 
 Message* PvmCommunicationBase::Receive()
@@ -97,7 +105,10 @@ int PvmCommunicationBase::GetTid()
  return this->_myTid;
 }
 
-
+void PvmCommunicationBase::SetMessageHandlingFunction(void (*function)(Message*))
+{
+ PvmCommunicationBase::_function=function;
+}
 
 
 

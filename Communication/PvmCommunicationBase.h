@@ -11,13 +11,14 @@ private:
 	PvmCommunicationBase();
 
 	static PvmCommunicationBase* _instance;
+	static int HandleMessage(int);
+	static int _handleMessageMHID;
+	static void (*_function)(Message*);
 
 	int _myTid;
 	int _nproc;
 	int* _tids;
 	int _desiredNumberOfSlaves;
-	void HandleMessage(int);
-	void (*_function)(Message*);
 
 public:
 	static PvmCommunicationBase* GetInstance();

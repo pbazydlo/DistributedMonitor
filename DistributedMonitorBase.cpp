@@ -7,8 +7,8 @@ namespace DistributedMonitor{
 DistributedMonitorBase::DistributedMonitorBase(ICommunicationBase* communicationBase)
 {
  this->_communicationBase = communicationBase;
- this->_monitorId = NextMonitorId;
- NextMonitorId++;
+ // this->_monitorId = NextMonitorId;
+ // NextMonitorId++;
 }
 
 void DistributedMonitorBase::Lock()
