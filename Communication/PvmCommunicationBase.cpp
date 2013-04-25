@@ -46,7 +46,7 @@ PvmCommunicationBase::~PvmCommunicationBase()
  delete log;
 
  delete[] this->_tids;
- pvm_delmhf(PvmCommunicationBase::_handleMessageMHID);
+// pvm_delmhf(PvmCommunicationBase::_handleMessageMHID);
  pvm_exit();
 }
 
@@ -73,7 +73,7 @@ void PvmCommunicationBase::Init(int masterOrSlave)
  pvm_joingroup(GROUPNAME);
  log->Log("Init-Approaching barrier", LOG_DEBUG);
  pvm_barrier(GROUPNAME, this->_desiredNumberOfSlaves+1);
-
+/* IF UNCOMMENTED CORRECT DESTRUCTOR AS WELL!!
  if(masterOrSlave==MASTER)
  {
   int  ctx = pvm_newcontext();
@@ -89,14 +89,14 @@ void PvmCommunicationBase::Init(int masterOrSlave)
   delete msg;
  }
 	int ctx = pvm_getcontext();
-//	 PvmCommunicationBase::_handleMessageMHID = pvm_addmhf(-1,SENDTAG,-1, HandleMessage);
-//	 pvm_delmhf(PvmCommunicationBase::_handleMessageMHID);
 	 PvmCommunicationBase::_handleMessageMHID = pvm_addmhf(-1,SENDTAG,ctx, HandleMessage);
 
 	 log->Log("HANDLE MESSAGE MHID", LOG_DEBUG);
 	 char mhid[200];
 	 sprintf(mhid, "M: %d|C: %d", PvmCommunicationBase::_handleMessageMHID, ctx);
 	 log->Log(mhid, LOG_DEBUG);
+*/
+
  log->Log("End init", LOG_DEBUG);
  delete log;
 }
@@ -139,6 +139,11 @@ void PvmCommunicationBase::Broadcast(int messageType)
 Message* PvmCommunicationBase::Receive()
 {
  int bufid, sender, messageSize, messageType, messageTid;
+ if(pvm_probe(-1, -1)==0)
+ {
+	return NULL;
+ }
+
  bufid = pvm_recv(-1, -1);
  pvm_upkint(&sender, 1, 1);
  pvm_upkint(&messageType, 1, 1);
