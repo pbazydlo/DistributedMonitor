@@ -3,6 +3,6 @@
 #include <iostream>
 #include <unistd.h>
 
-#define SLAVENUM 3
+#define SLAVENUM 1
 
 DistributedMonitor::DistributedMonitorBase* mbase;

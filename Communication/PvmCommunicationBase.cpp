@@ -115,7 +115,7 @@ void PvmCommunicationBase::SetDesiredNumberOfSlaves(int numberOfSlaves)
  this->_desiredNumberOfSlaves=numberOfSlaves;
 }
 
-void PvmCommunicationBase::Send(int receiver, int messageType)
+void PvmCommunicationBase::Send(int receiver, int messageType, int messagePriority)
 {
  if(messageType<=0)
  {
@@ -126,10 +126,11 @@ void PvmCommunicationBase::Send(int receiver, int messageType)
  pvm_initsend(PvmDataDefault);
  pvm_pkint(&this->_myTid, 1, 1);
  pvm_pkint(&messageType, 1, 1);
+ pvm_pkint(&messagePriority, 1, 1);
  pvm_send(receiver, SENDTAG);
 }
 
-void PvmCommunicationBase::Broadcast(int messageType)
+void PvmCommunicationBase::Broadcast(int messageType, int messagePriority)
 {
  Logger* log = new Logger();
  log->Log("Broadcast", LOG_DEBUG);
@@ -137,12 +138,14 @@ void PvmCommunicationBase::Broadcast(int messageType)
  pvm_initsend(PvmDataDefault);
  pvm_pkint(&this->_myTid, 1, 1);
  pvm_pkint(&messageType, 1, 1);
+ pvm_pkint(&messagePriority, 1, 1);
  pvm_bcast(GROUPNAME, SENDTAG);
 }
 
 Message* PvmCommunicationBase::Receive()
 {
- int bufid, sender, messageSize, messageType, messageTid;
+ int bufid, sender, messageSize, messageType, messageTid,
+	messagePriority;
  /*if(pvm_probe(-1, -1)==0)
  {
 	return NULL;
@@ -151,10 +154,12 @@ Message* PvmCommunicationBase::Receive()
  bufid = pvm_recv(-1, -1);
  pvm_upkint(&sender, 1, 1);
  pvm_upkint(&messageType, 1, 1);
+ pvm_upkint(&messagePriority, 1, 1);
 // pvm_bufinfo(bufid, &messageSize, &messageType, &messageTid);
  Message* result = new Message();
  result->Sender = sender;
  result->MessageType = messageType;
+ result->MessagePriority = messagePriority;
  return result;
 }
 

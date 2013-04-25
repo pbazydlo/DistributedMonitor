@@ -11,9 +11,9 @@ class ICommunicationBase {
 public:
 	ICommunicationBase();
 	virtual void Init(int masterOrSlave) = 0;
-	virtual void Send(int receiver, int messageType) = 0;
+	virtual void Send(int receiver, int messageType, int messagePriority) = 0;
 	virtual Message* Receive() = 0;
-	virtual void Broadcast(int messageType) = 0;
+	virtual void Broadcast(int messageType, int messagePriority) = 0;
 	virtual int GetNumberOfSlaves() = 0;
 	virtual void SetDesiredNumberOfSlaves(int numberOfSlaves) = 0;
 	virtual int GetTid() = 0;

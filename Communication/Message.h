@@ -3,6 +3,7 @@
 
 struct Message {
 	int Sender;
+	int MessagePriority;
 	int MessageType;
 };
 

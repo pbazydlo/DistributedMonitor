@@ -6,6 +6,8 @@ namespace DistributedMonitor{
 
 #define DMB_MSG_ENTRY_REQUEST	100
 #define DMB_MSG_ENTRY_ACCEPT	101
+	
+	int DistributedMonitorBase::NextMonitorId = 0;
 
 	DistributedMonitorBase::DistributedMonitorBase(ICommunicationBase* communicationBase)
 	{
@@ -13,9 +15,14 @@ namespace DistributedMonitor{
 		log->Log("Initialising DistributedMonitorBase", LOG_DEBUG);
 		this->_communicationBase = communicationBase;
 		this->_locked = false;
-		// this->_monitorId = NextMonitorId;
-		// NextMonitorId++;
+		this->UpdateMonitorId();
 		delete log;
+	}
+
+	void DistributedMonitorBase::UpdateMonitorId()
+	{
+		this->_monitorId = NextMonitorId;
+		NextMonitorId=(NextMonitorId+1)%10;
 	}
 
 	void DistributedMonitorBase::Lock()
@@ -33,7 +40,7 @@ namespace DistributedMonitor{
 		int numberOfAccepts=0;
 		int myTid = this->_communicationBase->GetTid();
 
-		this->_communicationBase->Broadcast(DMB_MSG_ENTRY_REQUEST);
+		this->_communicationBase->Broadcast(DMB_MSG_ENTRY_REQUEST, this->_monitorId);
 		char numOfCo[100];
 			sprintf(numOfCo, "%d / %d",numberOfAccepts,numberOfCoparticipants);
 			log->Log(numOfCo, LOG_DEBUG);
@@ -51,10 +58,11 @@ namespace DistributedMonitor{
 						numberOfAccepts++;
 						break;
 					case DMB_MSG_ENTRY_REQUEST:
-						if(msg->Sender > myTid)
+						if((msg->MessagePriority < this->_monitorId) || 
+						   (msg->Sender > myTid && msg->MessagePriority == this->_monitorId))
 						{
 							// let him in -> he has bigger priority
-							this->_communicationBase->Send(msg->Sender, DMB_MSG_ENTRY_ACCEPT);
+							this->_communicationBase->Send(msg->Sender, DMB_MSG_ENTRY_ACCEPT, this->_monitorId);
 							log->Log("I'm weaker", LOG_DEBUG);
 						}
 						else
@@ -93,12 +101,14 @@ namespace DistributedMonitor{
 		{
 			int receiver = this->_unlockPeers.front();
 			this->_unlockPeers.pop();
-			this->_communicationBase->Send(receiver, DMB_MSG_ENTRY_ACCEPT);
+			this->_communicationBase->Send(receiver, DMB_MSG_ENTRY_ACCEPT, this->_monitorId);
 			log->Log("Unlock", LOG_DEBUG);
 			char str[100];
 			sprintf(str, "%d", receiver);
 			log->Log(str, LOG_DEBUG);
 		}
+
+		this->UpdateMonitorId();
 
 		delete log;
 	}

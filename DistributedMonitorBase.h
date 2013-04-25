@@ -14,6 +14,7 @@ private:
 	int _monitorId;
 	bool _locked;
 	std::queue<int> _unlockPeers;
+	void UpdateMonitorId();
 public:
 	DistributedMonitorBase(ICommunicationBase*);
 	void Lock();

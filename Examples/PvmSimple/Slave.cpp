@@ -3,13 +3,6 @@
 
 PvmCommunicationBase* pvmCom;
 
-void Handle(Message* msg)
-{
-  std::cout<<"GOT MESSAGE - ANSWER";
-  pvmCom->Send(msg->Sender, 5);
-  delete msg;
-}
-
 int main()
 {
  pvmCom = PvmCommunicationBase::GetInstance();
