@@ -68,6 +68,10 @@ void PvmCommunicationBase::Init(int masterOrSlave)
   this->_nproc = pvm_spawn(SLAVENAME, NULL, PvmTaskDefault, "", 
   	this->_desiredNumberOfSlaves, this->_tids);
  }
+ else
+ {
+  this->_nproc=this->_desiredNumberOfSlaves;
+ }
 
  log->Log("Init-Joingroup", LOG_DEBUG);
  pvm_joingroup(GROUPNAME);
@@ -139,10 +143,10 @@ void PvmCommunicationBase::Broadcast(int messageType)
 Message* PvmCommunicationBase::Receive()
 {
  int bufid, sender, messageSize, messageType, messageTid;
- if(pvm_probe(-1, -1)==0)
+ /*if(pvm_probe(-1, -1)==0)
  {
 	return NULL;
- }
+ }*/
 
  bufid = pvm_recv(-1, -1);
  pvm_upkint(&sender, 1, 1);

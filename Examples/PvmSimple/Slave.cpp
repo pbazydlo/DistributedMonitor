@@ -17,18 +17,18 @@ int main()
 // pvmCom->SetMessageHandlingFunction(Handle);
  pvmCom->Init(SLAVE);
 
- Message* msg = NULL;
- while((msg = pvmCom->Receive()) == NULL)
+ int tid = pvmCom->GetTid();
+ mbase = new DistributedMonitor::DistributedMonitorBase(pvmCom);
+
+ while(true)
  {
-  sleep(1);
+ 	mbase->Lock();
+	std::cout<<tid<<" is inside\n";
+	sleep(1);
+	std::cout<<tid<<" goes out\n";
+	mbase->Unlock();
+	sleep(1);
  }
- std::cout<<"Slave got message\n";
- Handle(msg);
-// std::cout<<"Receive"<<std::endl;
-// Message* msg = pvmCom->Receive();
-// std::cout<<"Send to "<<msg->Sender<<std::endl;;
-// pvmCom->Send(msg->Sender, 5);
-// delete msg;
 
  delete pvmCom;
 }

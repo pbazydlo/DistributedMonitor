@@ -1,46 +1,106 @@
 #include "DistributedMonitorBase.h"
 #include "Logging/Logger.h"
+#include <stdio.h>
+#include <unistd.h>
 namespace DistributedMonitor{
 
 #define DMB_MSG_ENTRY_REQUEST	100
 #define DMB_MSG_ENTRY_ACCEPT	101
 
-DistributedMonitorBase::DistributedMonitorBase(ICommunicationBase* communicationBase)
-{
- Logger* log = new Logger();
- log->Log("Initialising DistributedMonitorBase\n", LOG_DEBUG);
- this->_communicationBase = communicationBase;
- // this->_monitorId = NextMonitorId;
- // NextMonitorId++;
- delete log;
-}
+	DistributedMonitorBase::DistributedMonitorBase(ICommunicationBase* communicationBase)
+	{
+		Logger* log = new Logger();
+		log->Log("Initialising DistributedMonitorBase", LOG_DEBUG);
+		this->_communicationBase = communicationBase;
+		this->_locked = false;
+		// this->_monitorId = NextMonitorId;
+		// NextMonitorId++;
+		delete log;
+	}
 
-void DistributedMonitorBase::Lock()
-{/*
- int numberOfCoparticipants = this->_communicationBase->GetNumberOfSlaves();
- int numberOfAccepts=0;
- int myTid = this->_communicationBase->GetTid();
-
- this->_communicationBase.Broadcast(DMB_MSG_ENTRY_REQUEST);
- while(numberOfAccepts<numberOfCoparticipants)
- {
-  Message* msg = this->_communicationBase.Receive();
-  switch(msg->MessageType)
-  {
-  	case DMB_MSG_ENTRY_ACCEPT:
-		numberOfAccepts++;
-		break;
-	case DMB_MSG_ENTRY_REQUEST:
-		if(msg->Sender>myTid)
+	void DistributedMonitorBase::Lock()
+	{
+		if(this->_locked)
 		{
+			return;
 		}
-		break;
-	default:
-		// WHAT IF IT IS DATA
-  };
 
-  delete msg;
- }*/
-}
+		Logger* log = new Logger();
+		this->_locked = true;
+
+		int numberOfCoparticipants = this->_communicationBase->GetNumberOfSlaves();
+
+		int numberOfAccepts=0;
+		int myTid = this->_communicationBase->GetTid();
+
+		this->_communicationBase->Broadcast(DMB_MSG_ENTRY_REQUEST);
+		char numOfCo[100];
+			sprintf(numOfCo, "%d / %d",numberOfAccepts,numberOfCoparticipants);
+			log->Log(numOfCo, LOG_DEBUG);
+		while(numberOfAccepts<numberOfCoparticipants)
+		{
+			sprintf(numOfCo, "%d / %d",numberOfAccepts,numberOfCoparticipants);
+			log->Log(numOfCo, LOG_DEBUG);
+			Message* msg = this->_communicationBase->Receive();
+			if(msg != NULL)
+			{
+				switch(msg->MessageType)
+				{
+					case DMB_MSG_ENTRY_ACCEPT:
+						log->Log("Got accept", LOG_DEBUG);
+						numberOfAccepts++;
+						break;
+					case DMB_MSG_ENTRY_REQUEST:
+						if(msg->Sender > myTid)
+						{
+							// let him in -> he has bigger priority
+							this->_communicationBase->Send(msg->Sender, DMB_MSG_ENTRY_ACCEPT);
+							log->Log("I'm weaker", LOG_DEBUG);
+						}
+						else
+						{
+							// i have bigger priority -> i'm going in just remember to notify him later
+							this->_unlockPeers.push(msg->Sender);
+							log->Log("I'm stronger", LOG_DEBUG);
+						}
+
+						break;
+					default:
+						// WHAT IF IT IS DATA
+						break;
+				};
+
+				delete msg;
+			}
+
+		}
+
+		delete log;
+	}
+
+	void DistributedMonitorBase::Unlock()
+	{
+		if(!this->_locked)
+		{
+			return;
+		}
+		
+		Logger* log = new Logger();
+		log->Log("Beginnig unlock", LOG_DEBUG);
+		this->_locked = false;
+		// free all waiting
+		while(!this->_unlockPeers.empty())
+		{
+			int receiver = this->_unlockPeers.front();
+			this->_unlockPeers.pop();
+			this->_communicationBase->Send(receiver, DMB_MSG_ENTRY_ACCEPT);
+			log->Log("Unlock", LOG_DEBUG);
+			char str[100];
+			sprintf(str, "%d", receiver);
+			log->Log(str, LOG_DEBUG);
+		}
+
+		delete log;
+	}
 
 }

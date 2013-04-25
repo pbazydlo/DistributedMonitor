@@ -2,6 +2,7 @@
 #define _DISTRIBUTEDMONITORBASE_
 
 #include "Communication/ICommunicationBase.h"
+#include <queue>
 //#include "../../ICommunicationBase.h"
 
 namespace DistributedMonitor {
@@ -11,6 +12,8 @@ private:
 	static int NextMonitorId;
 	ICommunicationBase* _communicationBase;
 	int _monitorId;
+	bool _locked;
+	std::queue<int> _unlockPeers;
 public:
 	DistributedMonitorBase(ICommunicationBase*);
 	void Lock();

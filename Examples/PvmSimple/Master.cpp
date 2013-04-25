@@ -16,15 +16,18 @@ int main()
 // pvmCom->SetMessageHandlingFunction(Handle);
  cout<<"init\n";
  pvmCom->Init(MASTER);
- pvmCom->Broadcast(5);
+ int tid = pvmCom->GetTid();
+ mbase = new DistributedMonitor::DistributedMonitorBase(pvmCom);
 
- Message* msg = NULL;
- while((msg = pvmCom->Receive()) == NULL)
+ while(true)
  {
-  sleep(1);
+ 	mbase->Lock();
+	cout<<tid<<" is inside\n";
+	sleep(1);
+	cout<<tid<<" goes out\n";
+	mbase->Unlock();
+//	sleep(1);
  }
- cout<<"First message\n";
- Handle(msg);
 
  delete pvmCom;
 }
