@@ -19,7 +19,9 @@ public:
 	DistributedMonitorBase(ICommunicationBase*);
 	void Lock();
 	void Unlock();
-
+protected:
+	virtual char* Serialize() = 0;
+	virtual void Deserialize(char* serializedContent) = 0; 
 };
 
 }

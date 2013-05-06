@@ -143,6 +143,20 @@ void PvmCommunicationBase::Broadcast(int messageType, int messagePriority)
  pvm_bcast(GROUPNAME, SENDTAG);
 }
 
+void PvmCommunicationBase::BroadcastData(int messageType,char* data, int messagePriority = 0)
+{
+ Logger* log = new Logger();
+ log->Log("Broadcast data", LOG_DEBUG);
+ log->Log(data, LOG_DEBUG);
+ delete log;
+ pvm_initsend(PvmDataDefault);
+ pvm_pkint(&this->_myTid, 1, 1);
+ pvm_pkint(&messageType, 1, 1);
+ pvm_pkint(&messagePriority, 1, 1);
+ pvm_pkstr(data);
+ pvm_bcast(GROUPNAME, SENDDATATAG);
+}
+
 Message* PvmCommunicationBase::Receive()
 {
  int bufid, sender, messageSize, messageType, messageTid,
@@ -163,6 +177,7 @@ Message* PvmCommunicationBase::Receive()
  result->MessagePriority = messagePriority;
  if(messageTag == SENDDATATAG)
  {
+ 	pvm_upkstr(result->Data);
  }
 
  return result;

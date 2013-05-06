@@ -4,8 +4,10 @@
 #include <unistd.h>
 namespace DistributedMonitor{
 
-#define DMB_MSG_ENTRY_REQUEST	100
-#define DMB_MSG_ENTRY_ACCEPT	101
+#define DMB_MSG_ENTRY_REQUEST		100
+#define DMB_MSG_ENTRY_ACCEPT		101
+#define DMB_MSG_SYNCHRONIZE		200
+#define DMB_MSG_SYNCHRONIZE_ACCEPTED	201
 	
 	int DistributedMonitorBase::NextMonitorId = 0;
 
