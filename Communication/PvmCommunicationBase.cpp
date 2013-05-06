@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #define SENDTAG 1
+#define SENDDATATAG 2
 
 // Create singleton
 PvmCommunicationBase* PvmCommunicationBase::_instance = new PvmCommunicationBase();
@@ -145,7 +146,7 @@ void PvmCommunicationBase::Broadcast(int messageType, int messagePriority)
 Message* PvmCommunicationBase::Receive()
 {
  int bufid, sender, messageSize, messageType, messageTid,
-	messagePriority;
+	messagePriority, messageTag;
  /*if(pvm_probe(-1, -1)==0)
  {
 	return NULL;
@@ -155,11 +156,15 @@ Message* PvmCommunicationBase::Receive()
  pvm_upkint(&sender, 1, 1);
  pvm_upkint(&messageType, 1, 1);
  pvm_upkint(&messagePriority, 1, 1);
-// pvm_bufinfo(bufid, &messageSize, &messageType, &messageTid);
+ pvm_bufinfo(bufid, &messageSize, &messageTag, &messageTid);
  Message* result = new Message();
  result->Sender = sender;
  result->MessageType = messageType;
  result->MessagePriority = messagePriority;
+ if(messageTag == SENDDATATAG)
+ {
+ }
+
  return result;
 }
 
