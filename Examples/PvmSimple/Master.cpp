@@ -17,7 +17,7 @@ int main()
  cout<<"init\n";
  pvmCom->Init(MASTER);
  int tid = pvmCom->GetTid();
- mbase = new DistributedMonitor::DistributedMonitorBase(pvmCom);
+ mbase = new MyMonitor(pvmCom);
 
  while(true)
  {

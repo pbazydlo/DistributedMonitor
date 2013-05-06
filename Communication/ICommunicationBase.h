@@ -14,7 +14,7 @@ public:
 	virtual void Send(int receiver, int messageType, int messagePriority) = 0;
 	virtual Message* Receive() = 0;
 	virtual void Broadcast(int messageType, int messagePriority) = 0;
-	virtual void BroadcastData(int messageType, char* data, int messagePriority = 0) = 0;
+	virtual void BroadcastData(int messageType, char* data, int messagePriority) = 0;
 	virtual int GetNumberOfSlaves() = 0;
 	virtual void SetDesiredNumberOfSlaves(int numberOfSlaves) = 0;
 	virtual int GetTid() = 0;

@@ -143,7 +143,7 @@ void PvmCommunicationBase::Broadcast(int messageType, int messagePriority)
  pvm_bcast(GROUPNAME, SENDTAG);
 }
 
-void PvmCommunicationBase::BroadcastData(int messageType,char* data, int messagePriority = 0)
+void PvmCommunicationBase::BroadcastData(int messageType,char* data, int messagePriority)
 {
  Logger* log = new Logger();
  log->Log("Broadcast data", LOG_DEBUG);

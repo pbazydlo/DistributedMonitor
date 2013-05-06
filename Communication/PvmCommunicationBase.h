@@ -28,7 +28,7 @@ public:
 	void Send(int receiver, int messageType, int messagePriority);
 	Message* Receive();
 	void Broadcast(int messageType, int messagePriority);
-	void BroadcastData(int messageType, char* data, int messagePriority = 0);
+	void BroadcastData(int messageType, char* data, int messagePriority);
 	int GetNumberOfSlaves();
 	void SetDesiredNumberOfSlaves(int numberOfSlaves);
 	int GetTid();

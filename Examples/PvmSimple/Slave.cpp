@@ -11,7 +11,7 @@ int main()
  pvmCom->Init(SLAVE);
 
  int tid = pvmCom->GetTid();
- mbase = new DistributedMonitor::DistributedMonitorBase(pvmCom);
+ mbase = new MyMonitor(pvmCom);
 
  while(true)
  {
