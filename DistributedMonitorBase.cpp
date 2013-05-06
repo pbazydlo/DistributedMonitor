@@ -75,8 +75,12 @@ namespace DistributedMonitor{
 						}
 
 						break;
+					case DMB_MSG_SYNCHRONIZE:
+						this->Deserialize(msg->Data);
+						log->Log("Deserialzed data, sending SYNC_ACCEPT", LOG_DEBUG);
+						this->_communicationBase->Send(msg->Sender, DMB_MSG_SYNCHRONIZE_ACCEPTED, this->_monitorId);
 					default:
-						// WHAT IF IT IS DATA
+						log->Log("Unexpected message!");
 						break;
 				};
 
@@ -97,6 +101,29 @@ namespace DistributedMonitor{
 		
 		Logger* log = new Logger();
 		log->Log("Beginnig unlock", LOG_DEBUG);
+		char *data = this->Serialize();
+		log->Log("Sending serialized data", LOG_DEBUG);
+		this->_communicationBase->BroadcastData(DMB_MSG_SYNCHRONIZE, data, this->_monitorId);
+		// get accepts from all peers
+		int numberOfCoparticipants = this->_communicationBase->GetNumberOfSlaves();
+		int numberOfAccepts=0;
+		while(numberOfAccepts<numberOfCoparticipants)
+		{
+			Message* msg = this->_communicationBase->Receive();
+			if(msg != NULL)
+			{
+				switch(msg->MessageType)
+				{
+					case DMB_MSG_SYNCHRONIZE_ACCEPTED:
+						numberOfAccepts++;
+						break;
+					default:
+						log->Log("Error got unexpected message from peer", LOG_DEBUG);
+				};
+			}
+		}
+		
+		log->Log("Data has been synchronized... finalizing unlock", LOG_DEBUG);
 		this->_locked = false;
 		// free all waiting
 		while(!this->_unlockPeers.empty())
