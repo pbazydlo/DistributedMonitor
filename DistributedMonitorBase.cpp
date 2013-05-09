@@ -78,6 +78,7 @@ namespace DistributedMonitor{
 					case DMB_MSG_SYNCHRONIZE:
 						log->Log("Got serialized data", LOG_DEBUG);
 						this->Deserialize(msg->Data);
+						delete [] msg->Data;
 						log->Log("Deserialzed data, sending SYNC_ACCEPT", LOG_DEBUG);
 						this->_communicationBase->Send(msg->Sender, DMB_MSG_SYNCHRONIZE_ACCEPTED, this->_monitorId);
 						break;
@@ -107,6 +108,7 @@ namespace DistributedMonitor{
 		char *data = this->Serialize();
 		log->Log("Sending serialized data", LOG_DEBUG);
 		this->_communicationBase->BroadcastData(DMB_MSG_SYNCHRONIZE, data, this->_monitorId);
+		delete[] data;
 		// get accepts from all peers
 		int numberOfCoparticipants = this->_communicationBase->GetNumberOfSlaves();
 		int numberOfAccepts=0;

@@ -10,18 +10,18 @@ namespace DistributedMonitor {
 class DistributedMonitorBase {
 private:
 	static int NextMonitorId;
-	ICommunicationBase* _communicationBase;
 	int _monitorId;
+	ICommunicationBase* _communicationBase;
 	bool _locked;
 	std::queue<int> _unlockPeers;
 	void UpdateMonitorId();
 public:
 	DistributedMonitorBase(ICommunicationBase*);
-	void Lock();
-	void Unlock();
 protected:
 	virtual char* Serialize() = 0;
 	virtual void Deserialize(char* serializedContent) = 0; 
+	void Lock();
+	void Unlock();
 };
 
 }

@@ -15,11 +15,7 @@ int main()
 
  while(true)
  {
- 	mbase->Lock();
-	std::cout<<tid<<" is inside\n";
-	sleep(1);
-	std::cout<<tid<<" goes out\n";
-	mbase->Unlock();
+	mbase->Entry();
 	sleep(1);
  }
 

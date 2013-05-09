@@ -21,12 +21,7 @@ int main()
 
  while(true)
  {
- 	mbase->Lock();
-	cout<<tid<<" is inside\n";
-	sleep(1);
-	cout<<tid<<" goes out\n";
-	mbase->Unlock();
-//	sleep(1);
+	mbase->Entry();
  }
 
  delete pvmCom;

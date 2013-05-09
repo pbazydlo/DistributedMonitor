@@ -3,6 +3,7 @@
 #include "../Logging/Logger.h"
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #define SENDTAG 1
 #define SENDDATATAG 2
 
@@ -153,6 +154,8 @@ void PvmCommunicationBase::BroadcastData(int messageType,char* data, int message
  pvm_pkint(&this->_myTid, 1, 1);
  pvm_pkint(&messageType, 1, 1);
  pvm_pkint(&messagePriority, 1, 1);
+ int dataLength = strlen(data);
+ pvm_pkint(&dataLength, 1, 1);
  pvm_pkstr(data);
  pvm_bcast(GROUPNAME, SENDDATATAG);
 }
@@ -178,8 +181,11 @@ Message* PvmCommunicationBase::Receive()
  result->MessagePriority = messagePriority;
  if(messageTag == SENDDATATAG)
  {
+	int dataLength=0;
+	pvm_upkint(&dataLength, 1, 1);
 	log->Log("Got data message", LOG_DEBUG);
-	result->Data = new char[200];
+	result->Data = new char[dataLength+1];
+	result->Data[dataLength]= 0;
  	pvm_upkstr(result->Data);
 	log->Log("Unpacked data from message", LOG_DEBUG);
  }

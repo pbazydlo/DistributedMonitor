@@ -9,13 +9,13 @@ run:
 	$(PVM_HOME)/master
 
 $(PVM_HOME)/master:	Master.cpp Common.h $(OBJS)
-	$(CXX) -g $^ -o $(PVM_HOME)/master -L$(PVMLIB) -I$(PVMINC) -lpvm3 -lgpvm3
+	$(CXX) -g $^ -o $(PVM_HOME)/master -L$(PVMLIB) -I$(PVMINC) -lpvm3 -lgpvm3 -Wwrite-strings
 
 $(PVM_HOME)/slave:	Slave.cpp Common.h $(OBJS)
-	$(CXX) -g $^ -o $(PVM_HOME)/slave -L$(PVMLIB) -I$(PVMINC) -lpvm3 -lgpvm3
+	$(CXX) -g $^ -o $(PVM_HOME)/slave -L$(PVMLIB) -I$(PVMINC) -lpvm3 -lgpvm3 -Wwrite-strings
 
 $(OBJS): %.o: %.cpp
-	$(CXX) -c -g $< -o $@
+	$(CXX) -c -g $< -o $@ -Wwrite-strings
 
 clean:
 	rm $(PVM_HOME)/master $(PVM_HOME)/slave
