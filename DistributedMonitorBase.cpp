@@ -120,6 +120,10 @@ namespace DistributedMonitor{
 					case DMB_MSG_SYNCHRONIZE_ACCEPTED:
 						numberOfAccepts++;
 						break;
+					case DMB_MSG_ENTRY_REQUEST:
+						// we will send the ENTRY_ACCEPT message after sync is complete
+						this->_unlockPeers.push(msg->Sender);
+						break;
 					default:
 						char m[500];
 						sprintf(m, "Unexpected message during unlock - %d", msg->MessageType);
