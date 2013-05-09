@@ -76,11 +76,13 @@ namespace DistributedMonitor{
 
 						break;
 					case DMB_MSG_SYNCHRONIZE:
+						log->Log("Got serialized data", LOG_DEBUG);
 						this->Deserialize(msg->Data);
 						log->Log("Deserialzed data, sending SYNC_ACCEPT", LOG_DEBUG);
 						this->_communicationBase->Send(msg->Sender, DMB_MSG_SYNCHRONIZE_ACCEPTED, this->_monitorId);
 					default:
-						log->Log("Unexpected message!");
+						sprintf(numOfCo, "Unexpected message while waiting for lock - %d", msg->MessageType);
+						log->Log(numOfCo, LOG_DEBUG);
 						break;
 				};
 
@@ -118,7 +120,9 @@ namespace DistributedMonitor{
 						numberOfAccepts++;
 						break;
 					default:
-						log->Log("Error got unexpected message from peer", LOG_DEBUG);
+						char m[500];
+						sprintf(m, "Unexpected message during unlock - %d", msg->MessageType);
+						log->Log(m, LOG_DEBUG);
 				};
 			}
 		}

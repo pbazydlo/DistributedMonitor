@@ -12,12 +12,12 @@ public:
 protected:
 	char* Serialize()
 	{
-		return "";
+		return "MyMonitorData";
 	}
 
 	void Deserialize(char* serializedContent)
 	{
-		// do sth
+		std::cout<<"Deserializing... got: "<<serializedContent<<std::endl;
 	}
 };
 

@@ -159,6 +159,7 @@ void PvmCommunicationBase::BroadcastData(int messageType,char* data, int message
 
 Message* PvmCommunicationBase::Receive()
 {
+ Logger* log = new Logger();
  int bufid, sender, messageSize, messageType, messageTid,
 	messagePriority, messageTag;
  /*if(pvm_probe(-1, -1)==0)
@@ -177,9 +178,13 @@ Message* PvmCommunicationBase::Receive()
  result->MessagePriority = messagePriority;
  if(messageTag == SENDDATATAG)
  {
+	log->Log("Got data message", LOG_DEBUG);
+	result->Data = new char[200];
  	pvm_upkstr(result->Data);
+	log->Log("Unpacked data from message", LOG_DEBUG);
  }
-
+ 
+ delete log;
  return result;
 }
 
