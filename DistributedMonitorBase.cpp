@@ -34,6 +34,10 @@ namespace DistributedMonitor{
 			return;
 		}
 
+		// terminate thread & join
+		this->_terminateMessageHandlingThread = true;
+		pthread_join(this->_messageHandlingThread, NULL);		
+
 		Logger* log = new Logger();
 		this->_locked = true;
 
@@ -151,6 +155,41 @@ namespace DistributedMonitor{
 		this->UpdateMonitorId();
 
 		delete log;
+
+		// start message handling thread
+		this->_terminateMessageHandlingThread = false;
+		pthread_create(&(this->_messageHandlingThread), NULL, MessageHandlingThread, (void*)this);
 	}
 
+void* DistributedMonitorBase::MessageHandlingThread(void* p) {
+	reinterpret_cast<DistributedMonitorBase*>(p)->HandleMessages();
+	pthread_exit(NULL);
+	return NULL;
+}
+
+void DistributedMonitorBase::HandleMessages() {
+	while(!this->_terminateMessageHandlingThread)
+	{
+		Message* msg = this->_communicationBase->Receive();
+		if(msg != NULL)
+		{
+			switch(msg->MessageType)
+			{
+				case DMB_MSG_ENTRY_REQUEST:
+					this->_communicationBase->Send(msg->Sender, DMB_MSG_ENTRY_ACCEPT, this->_monitorId);
+					break;
+				case DMB_MSG_SYNCHRONIZE:
+					this->Deserialize(msg->Data);
+					delete [] msg->Data;
+					this->_communicationBase->Send(msg->Sender, DMB_MSG_SYNCHRONIZE_ACCEPTED, this->_monitorId);
+					break;
+				default:
+					break;
+			};
+
+			delete msg;
+		}
+	}
+}
+	
 }
