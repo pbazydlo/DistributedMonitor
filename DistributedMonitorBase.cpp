@@ -80,6 +80,7 @@ namespace DistributedMonitor{
 						this->Deserialize(msg->Data);
 						log->Log("Deserialzed data, sending SYNC_ACCEPT", LOG_DEBUG);
 						this->_communicationBase->Send(msg->Sender, DMB_MSG_SYNCHRONIZE_ACCEPTED, this->_monitorId);
+						break;
 					default:
 						sprintf(numOfCo, "Unexpected message while waiting for lock - %d", msg->MessageType);
 						log->Log(numOfCo, LOG_DEBUG);
