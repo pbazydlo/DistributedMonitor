@@ -15,7 +15,7 @@ int main()
  while(true)
  {
 	buffer->Get();
-	sleep(2);
+	sleep(4);
  }
 
  delete pvmCom;
