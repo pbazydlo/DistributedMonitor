@@ -2,6 +2,7 @@
 #define _MpiCommunicationBase_
 
 #include "ICommunicationBase.h"
+#include <mpi.h>
 
 class MpiCommunicationBase : public ICommunicationBase {
 private:
@@ -16,6 +17,11 @@ private:
 	int _nproc;
 	int _desiredNumberOfSlaves;
 	int _clock;
+	
+	void RegisterSyncMsgType();
+	void RegisterDataMsgType();
+        MPI_Datatype _mpiSyncMsgType;
+	MPI_Datatype _mpiDataMsgType;	
 public:
 	static MpiCommunicationBase* GetInstance();
 
@@ -30,7 +36,25 @@ public:
 	void SetDesiredNumberOfSlaves(int numberOfSlaves);
 	int GetTid();
 	int GetClock();
-	void SetMessageHandlingFunction(void (*function)(Message*));
+};
+
+#define MPI_SYNC_MSG_ITEMS_COUNT 4
+struct MpiSynchronizationMessage {
+	int MyTid;
+	int Clock;
+	int MessageType;
+	int MessagePriority;
+};
+
+#define MPI_DATA_MSG_ITEMS_COUNT 6
+#define MPI_DATA_MSG_PAYLOAD_SIZE 256
+struct MpiDataMessage {
+	int MyTid;
+	int Clock;
+	int MessageType;
+	int MessagePriority;
+	int DataLength;
+	char Data[MPI_DATA_MSG_PAYLOAD_SIZE];
 };
 
 #endif

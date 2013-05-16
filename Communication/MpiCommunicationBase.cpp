@@ -4,28 +4,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stddef.h> //offsetof
 #define SENDTAG 1
 #define SENDDATATAG 2
 
 // Create singleton
 MpiCommunicationBase* MpiCommunicationBase::_instance = new MpiCommunicationBase();
-
-void (*MpiCommunicationBase:: _function)(Message*) = 0;
-int MpiCommunicationBase::_handleMessageMHID = 0;
-
-int MpiCommunicationBase::HandleMessage(int messageId)
-{
- Logger* log = new Logger();
- log->Log("Got message", LOG_DEBUG);
- int messageSize, messageTid;
- Message* msg = new Message();
- pvm_upkint(&msg->Sender, 1, 1);
- pvm_upkint(&msg->MessageType, 1, 1);
- delete log;
-// pvm_bufinfo(messageId, &messageSize, &msg->MessageType, &messageTid);
- (*MpiCommunicationBase::_function)(msg);
- return 0;
-}
 
 // Returns singleton instance
 MpiCommunicationBase* MpiCommunicationBase::GetInstance()
@@ -36,6 +20,8 @@ MpiCommunicationBase* MpiCommunicationBase::GetInstance()
 MpiCommunicationBase::MpiCommunicationBase()
 {
  Logger* log =new Logger();
+ this->RegisterSyncMsgType();
+ this->RegisterDataMsgType();
  log->Log("Initialised communication base", LOG_DEBUG);
  delete log;
 }
@@ -95,14 +81,13 @@ void MpiCommunicationBase::Send(int receiver, int messageType, int messagePriori
 
  this->_clock++;
  
- MPI_Send( msg, MSG_SIZE, MPI_INT, (rank+1)%size, MSG_HELLO, MPI_COMM_WORLD );
 
-pvm_initsend(PvmDataDefault);
- pvm_pkint(&this->_myTid, 1, 1);
- pvm_pkint(&this->_clock, 1, 1);
- pvm_pkint(&messageType, 1, 1);
- pvm_pkint(&messagePriority, 1, 1);
- pvm_send(receiver, SENDTAG);
+ MpiSynchronizationMessage mpiSyncMsg; //create instance of structure
+ mpiSyncMsg.MyTid = this->_myTid;
+ mpiSyncMsg.Clock = this->_clock;
+ mpiSyncMsg.MessageType = messageType;
+ mpiSyncMsg.MessagePriority = messagePriority; 
+ MPI_Send( &mpiSyncMsg, 1, this->_mpiSyncMsgType, receiver, SENDTAG, MPI_COMM_WORLD );
 }
 
 void MpiCommunicationBase::Broadcast(int messageType, int messagePriority)
@@ -111,12 +96,16 @@ void MpiCommunicationBase::Broadcast(int messageType, int messagePriority)
  log->Log("Broadcast", LOG_DEBUG);
  delete log;
  this->_clock++;
- pvm_initsend(PvmDataDefault);
- pvm_pkint(&this->_myTid, 1, 1);
- pvm_pkint(&this->_clock, 1, 1);
- pvm_pkint(&messageType, 1, 1);
- pvm_pkint(&messagePriority, 1, 1);
- pvm_bcast(GROUPNAME, SENDTAG);
+ MpiSynchronizationMessage mpiSyncMsg; //create instance of structure
+ mpiSyncMsg.MyTid = this->_myTid;
+ mpiSyncMsg.Clock = this->_clock;
+ mpiSyncMsg.MessageType = messageType;
+ mpiSyncMsg.MessagePriority = messagePriority; 
+ for(int i=0; i<this->_nproc+1; i++) {
+  if(i!=this->_myTid) {
+   MPI_Send( &mpiSyncMsg, 1, this->_mpiSyncMsgType, i, SENDTAG, MPI_COMM_WORLD );
+  }
+ }
 }
 
 void MpiCommunicationBase::BroadcastData(int messageType,char* data, int messagePriority)
@@ -126,52 +115,65 @@ void MpiCommunicationBase::BroadcastData(int messageType,char* data, int message
  log->Log(data, LOG_DEBUG);
  delete log;
  this->_clock++;
- pvm_initsend(PvmDataDefault);
- pvm_pkint(&this->_myTid, 1, 1);
- pvm_pkint(&this->_clock, 1, 1);
- pvm_pkint(&messageType, 1, 1);
- pvm_pkint(&messagePriority, 1, 1);
- int dataLength = strlen(data);
- pvm_pkint(&dataLength, 1, 1);
- pvm_pkstr(data);
- pvm_bcast(GROUPNAME, SENDDATATAG);
+ MpiDataMessage mpiDataMsg; //create instance of structure
+ mpiDataMsg.MyTid = this->_myTid;
+ mpiDataMsg.Clock = this->_clock;
+ mpiDataMsg.MessageType = messageType;
+ mpiDataMsg.MessagePriority = messagePriority; 
+ mpiDataMsg.DataLength = strlen(data);
+ strncpy( mpiDataMsg.Data, data, MPI_DATA_MSG_PAYLOAD_SIZE-1);
+ for(int i=0; i<this->_nproc+1; i++) {
+  if(i!=this->_myTid) {
+   MPI_Send( &mpiDataMsg, 1, this->_mpiSyncMsgType, i, SENDTAG, MPI_COMM_WORLD );
+  }
+ }
 }
 
 Message* MpiCommunicationBase::Receive(bool notBlocking)
 {
  Logger* log = new Logger();
- int bufid, sender, messageSize, messageType, messageTid,
-	messagePriority, messageTag, senderClock;
- if(notBlocking && pvm_probe(-1, -1)==0)
- {
-	return NULL;
+ int tag, sender, flag;
+ MPI_Status status;
+ 
+ // non-blocking probe
+ MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+ 
+ // if there is no message and we don't want to wait...
+ if(notBlocking && flag==false) {
+ 	return NULL;
+ } 
+  
+ Message* result = new Message();
+ 
+ // otherwise wait for the message
+ if(MPI_Probe( MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status)==MPI_SUCCESS) {
+   tag = status.MPI_TAG; //MPI_Get_tag(status, &tag);
+   sender = status.MPI_SOURCE; //MPI_Get_source(status, &sender);
+   if(tag == SENDTAG) {
+	MpiSynchronizationMessage mpiSyncMsg;
+        MPI_Recv(&mpiSyncMsg, 1, this->_mpiSyncMsgType, sender, tag, MPI_COMM_WORLD, &status);
+	result->Sender = mpiSyncMsg.MyTid;
+	result->SenderClock = mpiSyncMsg.Clock;
+	result->MessageType = mpiSyncMsg.MessageType;
+	result->MessagePriority = mpiSyncMsg.MessagePriority;
+   } else if(tag == SENDDATATAG) {
+	log->Log("Got data message", LOG_DEBUG);
+	MpiDataMessage mpiDataMsg;
+        MPI_Recv(&mpiDataMsg, 1, this->_mpiDataMsgType, sender, tag, MPI_COMM_WORLD, &status);
+	result->Sender = mpiDataMsg.MyTid;
+	result->SenderClock = mpiDataMsg.Clock;
+	result->MessageType = mpiDataMsg.MessageType;
+	result->MessagePriority = mpiDataMsg.MessagePriority;
+	result->Data = new char[mpiDataMsg.DataLength+1];
+	strncpy(result->Data, mpiDataMsg.Data, MPI_DATA_MSG_PAYLOAD_SIZE-1); 	
+	log->Log("Unpacked data from message", LOG_DEBUG);
+	result->Data[mpiDataMsg.DataLength]=0;
+   }
  }
 
- bufid = pvm_recv(-1, -1);
- pvm_upkint(&sender, 1, 1);
- pvm_upkint(&senderClock, 1, 1);
- pvm_upkint(&messageType, 1, 1);
- pvm_upkint(&messagePriority, 1, 1);
- pvm_bufinfo(bufid, &messageSize, &messageTag, &messageTid);
- Message* result = new Message();
- result->Sender = sender;
- result->SenderClock = senderClock;
- result->MessageType = messageType;
- result->MessagePriority = messagePriority;
- if(messageTag == SENDDATATAG)
+ if(this->_clock<result->SenderClock)
  {
-	int dataLength=0;
-	pvm_upkint(&dataLength, 1, 1);
-	log->Log("Got data message", LOG_DEBUG);
-	result->Data = new char[dataLength+1];
-	result->Data[dataLength]= 0;
- 	pvm_upkstr(result->Data);
-	log->Log("Unpacked data from message", LOG_DEBUG);
- }
- 
- if(this->_clock<senderClock)
- {
-  this->_clock = senderClock;
+  this->_clock = result->SenderClock;
  }
 
  delete log;
@@ -188,14 +190,37 @@ int MpiCommunicationBase::GetClock()
  return this->_clock;
 }
 
-void MpiCommunicationBase::SetMessageHandlingFunction(void (*function)(Message*))
+void MpiCommunicationBase::RegisterSyncMsgType() 
 {
- MpiCommunicationBase::_function=function;
+ int blocklengths[MPI_SYNC_MSG_ITEMS_COUNT] = {1,1,1,1};
+ MPI_Datatype types[MPI_SYNC_MSG_ITEMS_COUNT] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT};
+ MPI_Aint     offsets[MPI_SYNC_MSG_ITEMS_COUNT];
+
+ offsets[0] = offsetof(struct MpiSynchronizationMessage, MyTid);
+ offsets[1] = offsetof(struct MpiSynchronizationMessage, Clock);
+ offsets[2] = offsetof(struct MpiSynchronizationMessage, MessageType);
+ offsets[3] = offsetof(struct MpiSynchronizationMessage, MessagePriority);
+
+ MPI_Type_create_struct(MPI_SYNC_MSG_ITEMS_COUNT, blocklengths, offsets, types, &(this->_mpiSyncMsgType));
+ MPI_Type_commit(&(this->_mpiSyncMsgType));
 }
 
+void MpiCommunicationBase::RegisterDataMsgType() 
+{
+ int blocklengths[MPI_DATA_MSG_ITEMS_COUNT] = {1,1,1,1,1,MPI_DATA_MSG_PAYLOAD_SIZE};
+ MPI_Datatype types[MPI_DATA_MSG_ITEMS_COUNT] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_CHAR};
+ MPI_Aint     offsets[MPI_DATA_MSG_ITEMS_COUNT];
 
+ offsets[0] = offsetof(struct MpiDataMessage, MyTid);
+ offsets[1] = offsetof(struct MpiDataMessage, Clock);
+ offsets[2] = offsetof(struct MpiDataMessage, MessageType);
+ offsets[3] = offsetof(struct MpiDataMessage, MessagePriority);
+ offsets[4] = offsetof(struct MpiDataMessage, DataLength);
+ offsets[5] = offsetof(struct MpiDataMessage, Data);
 
-
+ MPI_Type_create_struct(MPI_DATA_MSG_ITEMS_COUNT, blocklengths, offsets, types, &(this->_mpiDataMsgType));
+ MPI_Type_commit(&(this->_mpiDataMsgType));
+}
 
 
 

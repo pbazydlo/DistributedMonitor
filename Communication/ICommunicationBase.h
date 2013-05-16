@@ -21,7 +21,6 @@ public:
 	virtual void SetDesiredNumberOfSlaves(int numberOfSlaves) = 0;
 	virtual int GetTid() = 0;
 	virtual int GetClock() = 0;
-	virtual void SetMessageHandlingFunction(void (*function)(Message*)) = 0;
 };
 
 #endif
