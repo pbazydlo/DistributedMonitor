@@ -51,22 +51,29 @@ namespace DistributedMonitor{
 
 		this->_communicationBase->Broadcast(DMB_MSG_ENTRY_REQUEST, this->_monitorId);
 		char numOfCo[100];
-			sprintf(numOfCo, "%d / %d",numberOfAccepts,numberOfCoparticipants);
+			sprintf(numOfCo, "[%d] %d / %d",myTid,numberOfAccepts,numberOfCoparticipants);
 			log->Log(numOfCo, LOG_DEBUG);
 		while(numberOfAccepts<numberOfCoparticipants)
 		{
-			sprintf(numOfCo, "%d / %d",numberOfAccepts,numberOfCoparticipants);
+			sprintf(numOfCo, "[%d] %d / %d",myTid,numberOfAccepts,numberOfCoparticipants);
 			log->Log(numOfCo, LOG_DEBUG);
-			Message* msg = this->_communicationBase->Receive();
+			Message* msg = this->_communicationBase->Receive(BLOCKING);
 			if(msg != NULL)
 			{
 				switch(msg->MessageType)
 				{
 					case DMB_MSG_ENTRY_ACCEPT:
-						log->Log("Got accept", LOG_DEBUG);
+						sprintf(numOfCo, "Got accept from %x", msg->Sender);
+						log->Log(numOfCo, LOG_DEBUG);
 						numberOfAccepts++;
 						break;
 					case DMB_MSG_ENTRY_REQUEST:
+						sprintf(numOfCo, "sndClk: %d, myClk: %d, sndTid>myTid: %d", 
+								msg->SenderClock, 
+								this->_communicationBase->GetClock(),
+								msg->Sender>myTid);
+						log->Log(numOfCo, LOG_DEBUG);
+
 						if((msg->SenderClock<this->_communicationBase->GetClock())
 							 || (msg->SenderClock==this->_communicationBase->GetClock() && msg->Sender > myTid ))
 						{
