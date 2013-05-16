@@ -20,8 +20,6 @@ MpiCommunicationBase* MpiCommunicationBase::GetInstance()
 MpiCommunicationBase::MpiCommunicationBase()
 {
  Logger* log =new Logger();
- this->RegisterSyncMsgType();
- this->RegisterDataMsgType();
  log->Log("Initialised communication base", LOG_DEBUG);
  delete log;
 }
@@ -55,6 +53,9 @@ void MpiCommunicationBase::Init(int argc, char** argv) {
 
  this->_clock = 0;
 
+ this->RegisterSyncMsgType();
+ this->RegisterDataMsgType();
+ 
  log->Log("Init-Approaching barrier", LOG_DEBUG);
  MPI_Barrier( MPI_COMM_WORLD );
 
@@ -121,10 +122,13 @@ void MpiCommunicationBase::BroadcastData(int messageType,char* data, int message
  mpiDataMsg.MessageType = messageType;
  mpiDataMsg.MessagePriority = messagePriority; 
  mpiDataMsg.DataLength = strlen(data);
- strncpy( mpiDataMsg.Data, data, MPI_DATA_MSG_PAYLOAD_SIZE-1);
+ if(mpiDataMsg.DataLength>MPI_DATA_MSG_PAYLOAD_SIZE-1) {
+  mpiDataMsg.DataLength = MPI_DATA_MSG_PAYLOAD_SIZE;
+ }
+ strncpy( mpiDataMsg.Data, data, mpiDataMsg.DataLength);
  for(int i=0; i<this->_nproc+1; i++) {
   if(i!=this->_myTid) {
-   MPI_Send( &mpiDataMsg, 1, this->_mpiSyncMsgType, i, SENDTAG, MPI_COMM_WORLD );
+   MPI_Send( &mpiDataMsg, 1, this->_mpiSyncMsgType, i, SENDDATATAG, MPI_COMM_WORLD );
   }
  }
 }
@@ -150,6 +154,7 @@ Message* MpiCommunicationBase::Receive(bool notBlocking)
    tag = status.MPI_TAG; //MPI_Get_tag(status, &tag);
    sender = status.MPI_SOURCE; //MPI_Get_source(status, &sender);
    if(tag == SENDTAG) {
+	log->Log("Got synchronization message", LOG_DEBUG);
 	MpiSynchronizationMessage mpiSyncMsg;
         MPI_Recv(&mpiSyncMsg, 1, this->_mpiSyncMsgType, sender, tag, MPI_COMM_WORLD, &status);
 	result->Sender = mpiSyncMsg.MyTid;
@@ -164,8 +169,10 @@ Message* MpiCommunicationBase::Receive(bool notBlocking)
 	result->SenderClock = mpiDataMsg.Clock;
 	result->MessageType = mpiDataMsg.MessageType;
 	result->MessagePriority = mpiDataMsg.MessagePriority;
+	std::cout << "Length of the message is " << mpiDataMsg.DataLength << "\n";
 	result->Data = new char[mpiDataMsg.DataLength+1];
-	strncpy(result->Data, mpiDataMsg.Data, MPI_DATA_MSG_PAYLOAD_SIZE-1); 	
+	strncpy(result->Data, mpiDataMsg.Data, mpiDataMsg.DataLength); 
+	//std::cout << "Content of the message is " << result->Data << "\n\n";	
 	log->Log("Unpacked data from message", LOG_DEBUG);
 	result->Data[mpiDataMsg.DataLength]=0;
    }
