@@ -128,7 +128,7 @@ void MpiCommunicationBase::BroadcastData(int messageType,char* data, int message
  strncpy( mpiDataMsg.Data, data, mpiDataMsg.DataLength);
  for(int i=0; i<this->_nproc+1; i++) {
   if(i!=this->_myTid) {
-   MPI_Send( &mpiDataMsg, 1, this->_mpiSyncMsgType, i, SENDDATATAG, MPI_COMM_WORLD );
+   MPI_Send( &mpiDataMsg, 1, this->_mpiDataMsgType, i, SENDDATATAG, MPI_COMM_WORLD );
   }
  }
 }
