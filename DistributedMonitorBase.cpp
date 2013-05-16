@@ -67,8 +67,8 @@ namespace DistributedMonitor{
 						numberOfAccepts++;
 						break;
 					case DMB_MSG_ENTRY_REQUEST:
-						if((msg->MessagePriority < this->_monitorId) || 
-						   (msg->Sender > myTid && msg->MessagePriority == this->_monitorId))
+						if((msg->SenderClock<this->_communicationBase->GetClock())
+							 || (msg->SenderClock==this->_communicationBase->GetClock() && msg->Sender > myTid ))
 						{
 							// let him in -> he has bigger priority
 							this->_communicationBase->Send(msg->Sender, DMB_MSG_ENTRY_ACCEPT, this->_monitorId);

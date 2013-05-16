@@ -3,6 +3,7 @@
 
 struct Message {
 	int Sender;
+	int SenderClock;
 	int MessagePriority;
 	int MessageType;
 	char* Data;

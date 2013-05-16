@@ -61,7 +61,7 @@ void PvmCommunicationBase::Init(int masterOrSlave)
 
  Logger* log = new Logger();
  log->Log("Init", LOG_DEBUG);
-
+ this->_clock = 0;
 
  if(masterOrSlave==MASTER)
  {
@@ -125,8 +125,10 @@ void PvmCommunicationBase::Send(int receiver, int messageType, int messagePriori
   return;
  }
 
+ this->_clock++;
  pvm_initsend(PvmDataDefault);
  pvm_pkint(&this->_myTid, 1, 1);
+ pvm_pkint(&this->_clock, 1, 1);
  pvm_pkint(&messageType, 1, 1);
  pvm_pkint(&messagePriority, 1, 1);
  pvm_send(receiver, SENDTAG);
@@ -137,8 +139,10 @@ void PvmCommunicationBase::Broadcast(int messageType, int messagePriority)
  Logger* log = new Logger();
  log->Log("Broadcast", LOG_DEBUG);
  delete log;
+ this->_clock++;
  pvm_initsend(PvmDataDefault);
  pvm_pkint(&this->_myTid, 1, 1);
+ pvm_pkint(&this->_clock, 1, 1);
  pvm_pkint(&messageType, 1, 1);
  pvm_pkint(&messagePriority, 1, 1);
  pvm_bcast(GROUPNAME, SENDTAG);
@@ -150,8 +154,10 @@ void PvmCommunicationBase::BroadcastData(int messageType,char* data, int message
  log->Log("Broadcast data", LOG_DEBUG);
  log->Log(data, LOG_DEBUG);
  delete log;
+ this->_clock++;
  pvm_initsend(PvmDataDefault);
  pvm_pkint(&this->_myTid, 1, 1);
+ pvm_pkint(&this->_clock, 1, 1);
  pvm_pkint(&messageType, 1, 1);
  pvm_pkint(&messagePriority, 1, 1);
  int dataLength = strlen(data);
@@ -164,7 +170,7 @@ Message* PvmCommunicationBase::Receive(bool notBlocking)
 {
  Logger* log = new Logger();
  int bufid, sender, messageSize, messageType, messageTid,
-	messagePriority, messageTag;
+	messagePriority, messageTag, senderClock;
  if(notBlocking && pvm_probe(-1, -1)==0)
  {
 	return NULL;
@@ -172,11 +178,13 @@ Message* PvmCommunicationBase::Receive(bool notBlocking)
 
  bufid = pvm_recv(-1, -1);
  pvm_upkint(&sender, 1, 1);
+ pvm_upkint(&senderClock, 1, 1);
  pvm_upkint(&messageType, 1, 1);
  pvm_upkint(&messagePriority, 1, 1);
  pvm_bufinfo(bufid, &messageSize, &messageTag, &messageTid);
  Message* result = new Message();
  result->Sender = sender;
+ result->SenderClock = senderClock;
  result->MessageType = messageType;
  result->MessagePriority = messagePriority;
  if(messageTag == SENDDATATAG)
@@ -190,6 +198,11 @@ Message* PvmCommunicationBase::Receive(bool notBlocking)
 	log->Log("Unpacked data from message", LOG_DEBUG);
  }
  
+ if(this->_clock<senderClock)
+ {
+  this->_clock = senderClock;
+ }
+
  delete log;
  return result;
 }
@@ -197,6 +210,11 @@ Message* PvmCommunicationBase::Receive(bool notBlocking)
 int PvmCommunicationBase::GetTid()
 {
  return this->_myTid;
+}
+
+int PvmCommunicationBase::GetClock()
+{
+ return this->_clock;
 }
 
 void PvmCommunicationBase::SetMessageHandlingFunction(void (*function)(Message*))

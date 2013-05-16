@@ -19,7 +19,7 @@ private:
 	int _nproc;
 	int* _tids;
 	int _desiredNumberOfSlaves;
-
+	int _clock;
 public:
 	static PvmCommunicationBase* GetInstance();
 
@@ -32,6 +32,7 @@ public:
 	int GetNumberOfSlaves();
 	void SetDesiredNumberOfSlaves(int numberOfSlaves);
 	int GetTid();
+	int GetClock();
 	void SetMessageHandlingFunction(void (*function)(Message*));
 };
 
