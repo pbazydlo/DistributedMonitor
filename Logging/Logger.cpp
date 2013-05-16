@@ -9,5 +9,8 @@ void Logger::Log(char *message, int logLevel)
   case LOG_DEBUG:
 	std::cout<<"[DEBUG] "<<message<<std::endl;
 	break;
+  case LOG_INFO:
+	std::cout<<"[I] "<<message<<std::endl;
+	break;
  };
 }
