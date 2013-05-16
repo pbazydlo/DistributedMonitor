@@ -53,6 +53,9 @@ namespace DistributedMonitor{
 		char numOfCo[100];
 			sprintf(numOfCo, "[%d] %d / %d",myTid,numberOfAccepts,numberOfCoparticipants);
 			log->Log(numOfCo, LOG_DEBUG);
+		
+		int myClock = this->_communicationBase->GetClock();
+
 		while(numberOfAccepts<numberOfCoparticipants)
 		{
 			sprintf(numOfCo, "[%d] %d / %d",myTid,numberOfAccepts,numberOfCoparticipants);
@@ -70,12 +73,12 @@ namespace DistributedMonitor{
 					case DMB_MSG_ENTRY_REQUEST:
 						sprintf(numOfCo, "sndClk: %d, myClk: %d, sndTid>myTid: %d", 
 								msg->SenderClock, 
-								this->_communicationBase->GetClock(),
+								myClock,
 								msg->Sender>myTid);
 						log->Log(numOfCo, LOG_DEBUG);
 
-						if((msg->SenderClock<this->_communicationBase->GetClock())
-							 || (msg->SenderClock==this->_communicationBase->GetClock() && msg->Sender > myTid ))
+						if((msg->SenderClock<myClock)
+							 || (msg->SenderClock==myClock && msg->Sender > myTid ))
 						{
 							// let him in -> he has bigger priority
 							this->_communicationBase->Send(msg->Sender, DMB_MSG_ENTRY_ACCEPT, this->_monitorId);
