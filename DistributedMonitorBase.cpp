@@ -18,6 +18,7 @@ namespace DistributedMonitor{
 		this->_communicationBase = communicationBase;
 		this->_locked = false;
 		this->UpdateMonitorId();
+		this->CreateMessageHandlingThread();
 		delete log;
 	}
 
@@ -34,11 +35,13 @@ namespace DistributedMonitor{
 			return;
 		}
 
+		Logger* log = new Logger();
+		
 		// terminate thread & join
+		log->Log("Waiting for join...", LOG_DEBUG);
 		this->_terminateMessageHandlingThread = true;
 		pthread_join(this->_messageHandlingThread, NULL);		
-
-		Logger* log = new Logger();
+		log->Log("Joined, proceeding with lock\n", LOG_DEBUG);
 		this->_locked = true;
 
 		int numberOfCoparticipants = this->_communicationBase->GetNumberOfSlaves();
@@ -153,12 +156,11 @@ namespace DistributedMonitor{
 		}
 
 		this->UpdateMonitorId();
+		
+		this->CreateMessageHandlingThread();
 
 		delete log;
 
-		// start message handling thread
-		this->_terminateMessageHandlingThread = false;
-		pthread_create(&(this->_messageHandlingThread), NULL, MessageHandlingThread, (void*)this);
 	}
 
 void* DistributedMonitorBase::MessageHandlingThread(void* p) {
@@ -170,7 +172,7 @@ void* DistributedMonitorBase::MessageHandlingThread(void* p) {
 void DistributedMonitorBase::HandleMessages() {
 	while(!this->_terminateMessageHandlingThread)
 	{
-		Message* msg = this->_communicationBase->Receive();
+		Message* msg = this->_communicationBase->Receive(NOTBLOCKING);
 		if(msg != NULL)
 		{
 			switch(msg->MessageType)
@@ -189,7 +191,15 @@ void DistributedMonitorBase::HandleMessages() {
 
 			delete msg;
 		}
+
+		sleep(1);
 	}
+}
+
+void DistributedMonitorBase::CreateMessageHandlingThread() {
+	// start message handling thread
+	this->_terminateMessageHandlingThread = false;
+	pthread_create(&(this->_messageHandlingThread), NULL, MessageHandlingThread, (void*)this);
 }
 	
 }

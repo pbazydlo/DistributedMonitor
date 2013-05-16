@@ -26,7 +26,7 @@ public:
 	~PvmCommunicationBase();
 	void Init(int masterOrSlave);
 	void Send(int receiver, int messageType, int messagePriority);
-	Message* Receive();
+	Message* Receive(bool notBlocking = false);
 	void Broadcast(int messageType, int messagePriority);
 	void BroadcastData(int messageType, char* data, int messagePriority);
 	int GetNumberOfSlaves();

@@ -20,7 +20,7 @@ private:
 	static void* MessageHandlingThread(void*);
 	void HandleMessages();
 	bool _terminateMessageHandlingThread;
-
+	void CreateMessageHandlingThread();
 public:
 	DistributedMonitorBase(ICommunicationBase*);
 

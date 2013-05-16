@@ -160,15 +160,15 @@ void PvmCommunicationBase::BroadcastData(int messageType,char* data, int message
  pvm_bcast(GROUPNAME, SENDDATATAG);
 }
 
-Message* PvmCommunicationBase::Receive()
+Message* PvmCommunicationBase::Receive(bool notBlocking)
 {
  Logger* log = new Logger();
  int bufid, sender, messageSize, messageType, messageTid,
 	messagePriority, messageTag;
- /*if(pvm_probe(-1, -1)==0)
+ if(notBlocking && pvm_probe(-1, -1)==0)
  {
 	return NULL;
- }*/
+ }
 
  bufid = pvm_recv(-1, -1);
  pvm_upkint(&sender, 1, 1);
