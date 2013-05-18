@@ -27,7 +27,7 @@ void ReadersWriters::WantsToWrite()
 {
 	this->Lock();
 
-	while(readersCount>0) {
+	while(readersCount>0 || writersCount>0) {
 		this->Unlock();
 		this->Lock();
 	}

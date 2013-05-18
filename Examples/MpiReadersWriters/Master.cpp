@@ -13,9 +13,16 @@ int main(int argc, char** argv)
  int tid = mpiCom->GetTid();
  srand(time(NULL)+tid);
  ReadersWriters* readersWriters = new ReadersWriters(mpiCom);
+ readersWriters->SetMyId(tid);
  int counter=0;
- int isReader = rand() & 1;
+ int isReader = tid % 2;
  int isWriter = 1 - isReader;
+ if(isWriter) {
+ 	cout<<"["<<tid<<"] is writer\n";
+ }
+ else {
+ 	cout<<"["<<tid<<"] is reader\n";
+ }
  
  while(true)
  {

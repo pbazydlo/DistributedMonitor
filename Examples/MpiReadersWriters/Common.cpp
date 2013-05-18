@@ -10,7 +10,7 @@ void ReadersWriters::WantsToRead()
 	}
 	
 	this->readersCount++;
-	std::cout << "Reader #" << readersCount << " is reading\n";
+	std::cout <<"["<<this->myId<<"]"<< "Reader #" << readersCount << " is reading\n";
 	
 	this->Unlock();
 }
@@ -19,7 +19,7 @@ void ReadersWriters::FinishReading()
 {
 	this->Lock();
 	this->readersCount--;
-	std::cout << "Reader finished reading\n";
+	std::cout <<"["<<this->myId<<"]" << "Reader finished reading\n";
 	this->Unlock();
 }
 
@@ -27,13 +27,13 @@ void ReadersWriters::WantsToWrite()
 {
 	this->Lock();
 
-	while(readersCount>0) {
+	while(readersCount>0 || writersCount>0) {
 		this->Unlock();
 		this->Lock();
 	}
 
 	this->writersCount++;
-	std::cout << "Writer is writing\n";
+	std::cout << "["<<this->myId<<"]"<<"Writer is writing\n";
 	
 	this->Unlock();
 }
@@ -42,8 +42,13 @@ void ReadersWriters::FinishWriting()
 {
 	this->Lock();
 	this->writersCount--;
-	std::cout << "Writer finished writing\n";
+	std::cout <<"["<<this->myId<<"]"<< "Writer finished writing\n";
 	this->Unlock();
+}
+
+void ReadersWriters::SetMyId(int id)
+{
+	this->myId = id;
 }
 
 char* ReadersWriters::Serialize()
@@ -57,7 +62,7 @@ char* ReadersWriters::Serialize()
 
 void ReadersWriters::Deserialize(char* serializedContent)
 {
-	std::cout<<"Deserializing... got: "<<serializedContent<<std::endl;
+	std::cout<<"["<<this->myId<<"]"<<"Deserializing... got: "<<serializedContent<<std::endl;
 	sscanf( serializedContent,"%d;%d",
 		&(this->readersCount),
 		&(this->writersCount) );
