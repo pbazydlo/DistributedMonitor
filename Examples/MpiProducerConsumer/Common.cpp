@@ -4,7 +4,7 @@ void Buffer::Put(int element)
 {
 	this->Lock();
 	// the following statement releases the lock if the process can't proceed
-	wait_while(counter>=CAPACITY);
+	WaitWhile(counter>=CAPACITY);
 	
 	this->counter++;
 	this->elements[this->putPosition] = element;
@@ -19,7 +19,7 @@ int Buffer::Get()
 	int output;
 
 	this->Lock();
-	wait_while(counter<=0);
+	WaitWhile(counter<=0);
 
 	this->counter--;
 	output = this->elements[this->getPosition];

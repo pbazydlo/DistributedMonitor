@@ -6,7 +6,7 @@
 #include <pthread.h>
 //#include "../../ICommunicationBase.h"
 
-#define wait_while(a) while(a) { this->Unlock(); this->Lock(); }
+#define WaitWhile(a) while(a) { this->Unlock(); this->Lock(); }
 
 
 namespace DistributedMonitor {
