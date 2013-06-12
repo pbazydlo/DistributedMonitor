@@ -2,9 +2,9 @@
 #define _DISTRIBUTEDMONITORBASE_
 
 #include "Communication/ICommunicationBase.h"
+#include "ICondition.h"
 #include <queue>
 #include <pthread.h>
-//#include "../../ICommunicationBase.h"
 
 #define WaitWhile(a) while(a) { this->Unlock(); this->Lock(); }
 
@@ -32,6 +32,7 @@ protected:
 	virtual void Deserialize(char* serializedContent) = 0; 
 	void Lock();
 	void Unlock();
+	ICondition *_currentCondition;
 };
 
 }

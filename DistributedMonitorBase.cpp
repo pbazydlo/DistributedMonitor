@@ -180,7 +180,8 @@ void* DistributedMonitorBase::MessageHandlingThread(void* p) {
 }
 
 void DistributedMonitorBase::HandleMessages() {
-	while(!this->_terminateMessageHandlingThread)
+	bool isConditionMet=false;
+	while(!this->_terminateMessageHandlingThread && isConditionMet)
 	{
 		Message* msg = this->_communicationBase->Receive(NOTBLOCKING);
 		if(msg != NULL)
@@ -194,6 +195,15 @@ void DistributedMonitorBase::HandleMessages() {
 					this->Deserialize(msg->Data);
 					delete [] msg->Data;
 					this->_communicationBase->Send(msg->Sender, DMB_MSG_SYNCHRONIZE_ACCEPTED, this->_monitorId);
+					if(this->_currentCondition != NULL)
+					{
+						isConditionMet = this->_currentCondition->IsMet();
+					}
+					else
+					{
+						isConditionMet = true;
+					}
+
 					break;
 				default:
 					break;
